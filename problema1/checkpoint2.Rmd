@@ -1,0 +1,86 @@
+---
+title: "Analise Inicial sobre os Alunos da UFCG"
+author: "Leonardo Alves dos Santos"
+date: "05-02-2016"
+output: html_document
+---
+```{r, echo=FALSE}
+#Libraries
+library(plyr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r, echo=FALSE}
+alunosUFCGAnon <- read.csv("~/Documents/cccUfcg/12-decimo_segundo_periodo/AD2/data/alunosUFCGAnon.csv")
+```
+Analise inicial dos dados referentes aos alunos da UFCG
+======
+
+Conhecendo os Dados
+------
+
+O conjunto de Dados possui 920.529 observações referentes aos dados dos alunos de 2002.1 até 2014.2 nos 9 campus da Intituição. Cada observação representa as informações referentes a uma disciplina matriculada por um aluno. Em tese cada Matricula representa um aluno diferente. A tabela abaixo mostra todos os campos da tabela de dados. 
+
+```{r}
+names(alunosUFCGAnon)
+```
+
+A intenção deste relátorio é responder a cinco perguntas iniciais sobre os dados, utilizando Estatística Descritiva. São elas:
+
+(1) há algo surpreendente ou estranho nos dados? 
+(2) como você sugere que um analista de dados lide com a parte estranha?
+(3)Em qual curso e em qual período estão as melhores e piores notas? Por que você acha que isso acontece em cada caso?
+(4)Quão desiguais são os notas entre os cursos e os períodos como um todo? Há cursos mais desiguais?
+(5)Quais unidades acadêmicas estão mais co-relacionadas em relação às notas dos alunos?
+
+
+```{r, echo=FALSE}
+alunos <-data.frame(count(alunosUFCGAnon, vars = c("Matricula")))
+```
+
+
+```{r}
+grp = c("Periodo", "Nome_Disciplina")
+dots =  lapply(grp, as.symbol)
+
+dessempenho_disp_por_periodo = alunosUFCGAnon %>% group_by_(.dots=dots) %>% summarise(mean=mean(Media_Disciplina,na.rm=TRUE ), sd=sd(Media_Disciplina, na.rm=TRUE), median = median(Media_Disciplina, na.rm=TRUE))
+                                                                                                                                                                                                           
+```
+
+CALCULO DIFERENCIAL E INTEGRAL
+```{r}
+desempenhoCAlC1 = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "CALCULO DIFERENCIAL E INTEGRAL I",]
+ggplot(desempenhoCAlC1, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
+ggplot(desempenhoCAlC1, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+
+```
+```{r}
+desempenhoCAlC2 = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "CALCULO DIFERENCIAL E INTEGRAL II",]
+ggplot(desempenhoCAlC2, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
+ggplot(desempenhoCAlC2, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+```
+```{r}
+desempenhoCAlC3 = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "CALCULO DIFERENCIAL E INTEGRAL III",]
+ggplot(desempenhoCAlC3, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
+ggplot(desempenhoCAlC3, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+```
+
+COMPILADORES
+```{r}
+desempenhoCOMPIL = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "COMPILADORES",]
+ggplot(desempenhoCOMPIL, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
+ggplot(desempenhoCOMPIL, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+```
+ANÁLISE E TÉCNICA DE ALGORITMOS
+```{r}
+desempenhoATAL = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "ANÁLISE E TÉCNICA DE ALGORITMOS",]
+ggplot(desempenhoATAL, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
+ggplot(desempenhoATAL, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+```
+
+
+```{r}
+tamanhoTurma = alunosUFCGAnon %>% group_by_(.dots=dots)
+```
+
