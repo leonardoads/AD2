@@ -1,10 +1,10 @@
 ---
-title: "Analise Inicial sobre os Alunos da UFCG"
+title: "Análise descritiva dos Estudantes da UFCG"
 author: "Leonardo Alves dos Santos"
-date: "05-02-2016"
-output: html_document
+date: "21-03-2016"
+output: pdf_document
 ---
-```{r, echo=FALSE}
+```{r, message=FALSE}
 #Libraries
 library(plyr)
 library(dplyr)
@@ -12,74 +12,161 @@ library(ggplot2)
 ```
 
 ```{r, echo=FALSE}
-alunosUFCGAnon <- read.csv("~/Documents/cccUfcg/12-decimo_segundo_periodo/AD2/data/alunosUFCGAnon.csv")
+alunosUFCGAnon <- read.csv("./data/alunosUFCGAnon.csv")
 ```
-Analise inicial dos dados referentes aos alunos da UFCG
-======
 
-Conhecendo os Dados
-------
+Introdução
+==
 
-O conjunto de Dados possui 920.529 observações referentes aos dados dos alunos de 2002.1 até 2014.2 nos 9 campus da Intituição. Cada observação representa as informações referentes a uma disciplina matriculada por um aluno. Em tese cada Matricula representa um aluno diferente. A tabela abaixo mostra todos os campos da tabela de dados. 
+O conjunto de dados que será analisado possui 920.529 observações, e contém informações sobre os alunos matriculados, e as respectivas disciplinas, na UFCG (Universidade Federal de Campina Grande) nos periodo de 2002.1 até 2014.1. Cada linha no registro representa um aluno matriculado em uma disciplina em um dado periodo e o seu desempenho.
+A base de dados contém a informação de 32342 matriculas, o que não representa 32342 alunos distintos, pois um mesmo alunos pode possuir mais de uma matricula ao longo do tempo, ou por ter mudado de curso ou por ter limpado seu curriculo. Ao todo são registradas informações de 95 cursos e um total de 4217 disciplinas e 7 Campus.
+
+```{r}
+min_periodo = min(alunosUFCGAnon$Periodo)
+max_periodo = max(alunosUFCGAnon$Periodo)
+num_matriculas = length(unique(alunosUFCGAnon$Matricula))
+num_cursos = length(unique(alunosUFCGAnon$Cod_Curso))
+num_disci = length(unique(alunosUFCGAnon$Cod_Disciplina))
+num_campus = length(unique(alunosUFCGAnon$Campus))
+```
+
+|  Periodos 	|  Número de Matriculas 	|   Número de Cursos	|  Número de Disciplinas 	|  Número de Campus 	|
+|:-:	|:-:	|:-:	|:-:	|:-:	|
+|  `r min_periodo` - `r max_periodo` 	|   `r num_matriculas`	|  `r num_cursos` 	|   `r num_disci`	|   `r num_campus`	|
+
+
+Conhecendo Melhor os Dados
+==
+
+Abaixo podemos ver o conjunto completo de informações do data set.
 
 ```{r}
 names(alunosUFCGAnon)
 ```
 
-A intenção deste relátorio é responder a cinco perguntas iniciais sobre os dados, utilizando Estatística Descritiva. São elas:
 
-(1) há algo surpreendente ou estranho nos dados? 
-(2) como você sugere que um analista de dados lide com a parte estranha?
-(3)Em qual curso e em qual período estão as melhores e piores notas? Por que você acha que isso acontece em cada caso?
-(4)Quão desiguais são os notas entre os cursos e os períodos como um todo? Há cursos mais desiguais?
-(5)Quais unidades acadêmicas estão mais co-relacionadas em relação às notas dos alunos?
+Analisando os dados podemos ver a relação entre os alunos aprovados, reprovados e trancados. Como é de
+se esperar a principal parcelas dos dados relatam alunos aprovados nas disciplinas, 81.58%. 8.07% dos
+matriculados foram reprovados por nota, 7.51% foram reprovados por falta e 2.82 % representa os trancamentos.
 
 
-```{r, echo=FALSE}
-alunos <-data.frame(count(alunosUFCGAnon, vars = c("Matricula")))
+```{r}
+sit_alunos = data.frame(alunosUFCGAnon$Situacao)
+c <- ggplot(sit_alunos, aes(factor(alunosUFCGAnon.Situacao)))
+c + geom_bar()
 ```
 
+Outra forma de ver as informações acima é que a media das disciplinas, em geral estão acima de 5, justamente
+a nota de corte que define se um aluno foi o não aprovado em uma disciplina na instituição
+ 
+```{r}
+media_disciplinas <- as.data.frame(aggregate(x=alunosUFCGAnon$Media_Disciplina, 
+                    by = list(alunosUFCGAnon$Cod_Disciplina), FUN=mean, na.rm=TRUE,                           simplify = TRUE, drop = TRUE))
+plot(media_disciplinas$x)
+```
+
+Nas próximas seções tentaremos responder algumas perguntas sobre os dados.
+
+
+Ao Longo dos Anos, o desempenho dos alunos em uma disciplina melhorou ou se manteve?
+==
+
+Considerando como desempenho do aluno em uma disciplina a média dele na disciplina, minha hipótese é que os desempenhos tenham aumentado ao longo do tempo, devido ao fato do aluno ter novas fontes de consulta e de aprendizado. 
+Devido ao fato de se ter muitas disciplinas, farei analise de um conjunto restrito delas. Selecionando, em especial, algumas disciplinas cursadas por alunos do curso de Ciência da Computação. Serão analisadas as seguites disciplinas:
+
+* CALCULO DIFERENCIAL E INTEGRAL I
+* CALCULO DIFERENCIAL E INTEGRAL II
+* COMPILADORES
+* ANÁLISE E TÉCNICA DE ALGORITMOS
+* PROGRAMAÇÃO I
+
+Para obter essa informação, os dados serão agrupados por periodo por disciplina e serão sumarizados pela média e mediana.
 
 ```{r}
 grp = c("Periodo", "Nome_Disciplina")
 dots =  lapply(grp, as.symbol)
 
-dessempenho_disp_por_periodo = alunosUFCGAnon %>% group_by_(.dots=dots) %>% summarise(mean=mean(Media_Disciplina,na.rm=TRUE ), sd=sd(Media_Disciplina, na.rm=TRUE), median = median(Media_Disciplina, na.rm=TRUE))
-                                                                                                                                                                                                           
-```
-
-CALCULO DIFERENCIAL E INTEGRAL
-```{r}
-desempenhoCAlC1 = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "CALCULO DIFERENCIAL E INTEGRAL I",]
-ggplot(desempenhoCAlC1, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
-ggplot(desempenhoCAlC1, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+dessempenho_disp_por_periodo = alunosUFCGAnon %>% group_by_(.dots=dots) %>%
+    summarise(mean=mean(Media_Disciplina,na.rm=TRUE ),
+    sd=sd(Media_Disciplina, na.rm=TRUE), median = median(Media_Disciplina, na.rm=TRUE))
 
 ```
+
+
+CALCULO DIFERENCIAL E INTEGRAL I
+------
+
+Disciplina do primeiro periodo do curso de Ciência da Computação. Como se pode observar abaixo, a média das turmas nessa displina é baixa. Porém ao contrário da hipotese inicial, que as médias deveriam aumentar ao longo do tempo, o que o gráfico abaixo mostra é o contrário, as Médias da disciplina está diminuindo ao longo do tempo. Em 2002.1  a média estava acima dos 6 pontos, e essa marca é unica, em nenhum outro periodo se teve média próximo disso. Na maior parte dos periodos avaliados a média fica entre 2 e 4 pontos. 
+
 ```{r}
-desempenhoCAlC2 = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "CALCULO DIFERENCIAL E INTEGRAL II",]
-ggplot(desempenhoCAlC2, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
-ggplot(desempenhoCAlC2, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+desempenhoCAlC1 = dessempenho_disp_por_periodo[
+        dessempenho_disp_por_periodo$Nome_Disciplina == 
+        "CALCULO DIFERENCIAL E INTEGRAL I",]
+
+ggplot(desempenhoCAlC1, aes(x=Periodo, y=mean)) +
+  geom_point(stat = "identity", size = 1.5) +
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
+
 ```
+OBS.: O ponto representa a média dentro da variação. Variação = media +- Desvio Padrão
+
+Quando se observa a Mediana, o periodo 2002.1 continua sendo um destaque em relação aos demais periodos. Uma observação que pode ser feita é que a uma grande variação nos dados. A média do Desvio Padrão é de `r mean(desempenhoCAlC1$sd)`, o que é relativamente alto.
+
 ```{r}
-desempenhoCAlC3 = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "CALCULO DIFERENCIAL E INTEGRAL III",]
-ggplot(desempenhoCAlC3, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
-ggplot(desempenhoCAlC3, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+ggplot(desempenhoCAlC1, aes(x=Periodo, y=median)) + 
+  geom_point(stat = "identity", size = 1.5) + 
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
+```
+OBS.: O ponto representa a Mediana dentro da variação. Variação = media +- Desvio Padrão
+
+*Conclusão*
+
+De forma superficial, visto que para fazer uma análise mais concreta seria preciso fazer testes estatisticos, pode-se dizer que ao contrário da hipotese inicial as notas dos alunos na disciplina de calculo diminuiram de 2002.1 a 2004.1 e depois disso se mantiveram muito próximas. Um pergunta que se pode fazer ao ver esse esse resultado é: Quais fatores devem estar influenciando esse resultado inferior?
+
+
+CALCULO DIFERENCIAL E INTEGRAL II
+------
+
+
+```{r}
+desempenhoCAlC2 = dessempenho_disp_por_periodo[
+    dessempenho_disp_por_periodo$Nome_Disciplina == "CALCULO DIFERENCIAL E INTEGRAL II",]
+
+ggplot(desempenhoCAlC2, aes(x=Periodo, y=median))  +
+  geom_point(stat = "identity", size = 1.5) +
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
+
+```
+
+
+```{r}
+ggplot(desempenhoCAlC2, aes(x=Periodo, y=mean))  +
+  geom_point(stat = "identity", size = 1.5) +
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
 ```
 
 COMPILADORES
+------
 ```{r}
 desempenhoCOMPIL = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "COMPILADORES",]
 ggplot(desempenhoCOMPIL, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
 ggplot(desempenhoCOMPIL, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
 ```
 ANÁLISE E TÉCNICA DE ALGORITMOS
+------
 ```{r}
 desempenhoATAL = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "ANÁLISE E TÉCNICA DE ALGORITMOS",]
 ggplot(desempenhoATAL, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
 ggplot(desempenhoATAL, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
 ```
 
-
+PROGRAMAÇÃO I
+------
+```{r}
+desempenhoPROGI = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "PROGRAMAÇÃO I",]
+ggplot(desempenhoPROGI, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
+ggplot(desempenhoPROGI, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+```
 ```{r}
 tamanhoTurma = alunosUFCGAnon %>% group_by_(.dots=dots)
 ```
