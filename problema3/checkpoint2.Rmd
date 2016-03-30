@@ -1,0 +1,18 @@
+---
+title: "Checkpoint 2 - Nível do PSA"
+author: "Leonardo Alves dos Santos"
+date: "March 30, 2016"
+output: html_document
+---
+
+```{r, message=FALSE, warning=FALSE}
+#Libraries
+library(plyr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+prostate.data <- read.delim("~/Workspace/AD2/problema3/data/prostate.data.txt")
+```
+
