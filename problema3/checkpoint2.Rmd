@@ -10,9 +10,53 @@ output: html_document
 library(plyr)
 library(dplyr)
 library(ggplot2)
+#library(caret)
 ```
 
 ```{r}
+#http://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/prostate.data
 prostate.data <- read.delim("~/Workspace/AD2/problema3/data/prostate.data.txt")
 ```
+
+```{r}
+boxplot_age <- ggplot(prostate.data, aes(y=age, x = ""))
+boxplot_age +geom_point()
+boxplot_age+geom_boxplot(outlier.colour = 'green')
+```
+
+```{r}
+plt_agexlpsa <- ggplot(prostate.data, aes(lpsa, age))
+plt_agexlpsa+geom_boxplot()
+plt_agexlpsa+geom_point(colour = "red", size = 2)
+```
+
+```{r}
+dados_treino <- prostate.data[prostate.data$train==TRUE,]
+dados_treino$train <- NULL
+
+dados_teste <- prostate.data[prostate.data$train==FALSE,] 
+dados_teste<- NULL
+```
+
+```{r}
+reg_multipla = lm(dados_treino$lpsa ~ dados_treino$lcavol + 
+                    dados_treino$lweight + dados_treino$age + dados_treino$lbph + 
+                    dados_treino$svi + dados_treino$lcp + dados_treino$gleason + 
+                    dados_treino$pgg45)
+summary(reg_multipla)
+```
+
+```{r}
+reg_multipla = lm(dados_treino$lpsa ~ dados_treino$lcavol + 
+                                      dados_treino$lweight +
+                                      dados_treino$age +
+                                      dados_treino$lbph + 
+                                      dados_treino$svi + 
+                                      dados_treino$lcp +  
+                                      dados_treino$pgg45)
+
+
+summary(reg_multipla)
+```
+
 

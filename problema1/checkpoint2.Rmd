@@ -2,7 +2,7 @@
 title: "Análise descritiva dos Estudantes da UFCG"
 author: "Leonardo Alves dos Santos"
 date: "21-03-2016"
-output: pdf_document
+output: html_document
 ---
 ```{r, message=FALSE}
 #Libraries
@@ -92,6 +92,7 @@ dessempenho_disp_por_periodo = alunosUFCGAnon %>% group_by_(.dots=dots) %>%
 
 ```
 
+Nos gráficos abaixo, cada dupla de barras representam dois periodos de um mesmo ano. 
 
 CALCULO DIFERENCIAL E INTEGRAL I
 ------
@@ -108,6 +109,7 @@ ggplot(desempenhoCAlC1, aes(x=Periodo, y=mean)) +
   geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
 
 ```
+
 OBS.: O ponto representa a média dentro da variação. Variação = media +- Desvio Padrão
 
 Quando se observa a Mediana, o periodo 2002.1 continua sendo um destaque em relação aos demais periodos. Uma observação que pode ser feita é que a uma grande variação nos dados. A média do Desvio Padrão é de `r mean(desempenhoCAlC1$sd)`, o que é relativamente alto.
@@ -117,6 +119,7 @@ ggplot(desempenhoCAlC1, aes(x=Periodo, y=median)) +
   geom_point(stat = "identity", size = 1.5) + 
   geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
 ```
+
 OBS.: O ponto representa a Mediana dentro da variação. Variação = media +- Desvio Padrão
 
 *Conclusão*
@@ -127,10 +130,11 @@ De forma superficial, visto que para fazer uma análise mais concreta seria prec
 CALCULO DIFERENCIAL E INTEGRAL II
 ------
 
-
+Ao contrário do que ocorre com calculo 1, não é possivel ver uma mudança visivel no comportamento das médias ao longo do tempo. Porém é possivel notar que em alguns periodos especificos se tem uma baixa na média, mas é um comportamento bastante pontual.
 ```{r}
 desempenhoCAlC2 = dessempenho_disp_por_periodo[
-    dessempenho_disp_por_periodo$Nome_Disciplina == "CALCULO DIFERENCIAL E INTEGRAL II",]
+    dessempenho_disp_por_periodo$Nome_Disciplina == 
+      "CALCULO DIFERENCIAL E INTEGRAL II",]
 
 ggplot(desempenhoCAlC2, aes(x=Periodo, y=median))  +
   geom_point(stat = "identity", size = 1.5) +
@@ -138,6 +142,7 @@ ggplot(desempenhoCAlC2, aes(x=Periodo, y=median))  +
 
 ```
 
+Não existe uma diferença notavel quando se avalia a media e a médiana, embora em geral a mediana se apresente mais alta do que a média. Importante notar que os dados não trazem informções consistentes sobre o periodod de 2002.1, por isso a média zero, que não representa q todos os alunos tiraram 0 neste periodo, mas sim inconsistência dos dados. 
 
 ```{r}
 ggplot(desempenhoCAlC2, aes(x=Periodo, y=mean))  +
@@ -145,29 +150,68 @@ ggplot(desempenhoCAlC2, aes(x=Periodo, y=mean))  +
   geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
 ```
 
+*Conclusão*
+Não houve uma mudança no desempenho dos alunos ao longo do tempo. Quanto a variação das notas, continuou muito parecida, apenas um pouco inferior, com a de Calculo I, em torno de `r mean(desempenhoCAlC2$sd)`.
+
 COMPILADORES
 ------
+Assim como ocorre com Calculo II, não aparenta ter ocorrido uma melhora no desempenho dos alunos ao longo do tempo. Porém, ao contrário do que acontece com as disciplinas de calculo, o desvio padrão se apresenta menor.
 ```{r}
 desempenhoCOMPIL = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "COMPILADORES",]
-ggplot(desempenhoCOMPIL, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
-ggplot(desempenhoCOMPIL, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+ggplot(desempenhoCOMPIL, aes(x=Periodo, y=median))  +
+  geom_point(stat = "identity", size = 1.5) +
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
 ```
+
+```{r}
+ggplot(desempenhoCOMPIL, aes(x=Periodo, y=mean))  +
+  geom_point(stat = "identity", size = 1.5) +
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
+```
+ 
+ A média do desvio padrão é de `r mean(desempenhoCOMPIL$sd)`, quase 1 ponto a menos do que ocorre com calculo. 
+
 ANÁLISE E TÉCNICA DE ALGORITMOS
 ------
+Em ATAL, nota-se que ouve uma queda leve no desempenho, entre 2006.1 e 2008.2, porém nos anos seguintes o desempenho volta a subir.
 ```{r}
-desempenhoATAL = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "ANÁLISE E TÉCNICA DE ALGORITMOS",]
-ggplot(desempenhoATAL, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
-ggplot(desempenhoATAL, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+desempenhoATAL = dessempenho_disp_por_periodo[
+  dessempenho_disp_por_periodo$Nome_Disciplina == "ANÁLISE E TÉCNICA DE ALGORITMOS",]
+
+ggplot(desempenhoATAL, aes(x=Periodo, y=median)) +
+  geom_point(stat = "identity", size = 1.5) +
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
+
+ggplot(desempenhoATAL, aes(x=Periodo, y=mean))  +
+  geom_point(stat = "identity", size = 1.5) +
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
 ```
+
+A média do desvio padrão é de `r mean(desempenhoATAL$sd)`, um pouco menor do que os Calculos e pouco maior que Compiladores. 
 
 PROGRAMAÇÃO I
 ------
+
+A disciplina de Programação I também é ofertada no primeiro periodo. Em geral o desempenho nesta disciplina é melhor do que em calculo I, no entanto, não houve melhoramento no desempenho, nem tão pouco houve uma piora ao longo do tempo.
+
 ```{r}
-desempenhoPROGI = dessempenho_disp_por_periodo[dessempenho_disp_por_periodo$Nome_Disciplina == "PROGRAMAÇÃO I",]
-ggplot(desempenhoPROGI, aes(x=Periodo, y=median)) + geom_bar(stat = "identity")
-ggplot(desempenhoPROGI, aes(x=Periodo, y=mean)) + geom_bar(stat = "identity")
+desempenhoPROGI = dessempenho_disp_por_periodo[
+  dessempenho_disp_por_periodo$Nome_Disciplina == "PROGRAMAÇÃO I",]
+
+ggplot(desempenhoPROGI, aes(x=Periodo, y=median)) +
+  geom_point(stat = "identity", size = 1.5) +
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
+
+ggplot(desempenhoPROGI, aes(x=Periodo, y=mean))  +
+  geom_point(stat = "identity", size = 1.5) +
+  geom_errorbar(aes(ymin = mean - sd, ymax =  mean + sd), width = 0.5)
 ```
-```{r}
-tamanhoTurma = alunosUFCGAnon %>% group_by_(.dots=dots)
-```
+
+O desvio padrão, assim como nos calculos, é alto: `r mean(desempenhoPROGI$sd)`.
+
+Conclusão
+==
+
+Ao menos nas disciplinas escolhidas para análise, a hipotese inicial não paracer ser válida. Em Calculo I, por exemplo, ele se mostra o contrario: O desempenho dos alunos caiu ao longo do tempo. Exceto em ATAL, que mostrou um leve aumento no desempenho. 
+Compiladores e Atal apresentaram uma variação menor no desempenho, em relação as demais analisada, como essas duas disciplinas são mais ao final do curso, pode-se perguntar se disciplinas iniciais apresentam maior variação do que disciplinas mais próximas ao fim do curso? 
 
