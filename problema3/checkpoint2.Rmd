@@ -10,12 +10,12 @@ output: html_document
 library(plyr)
 library(dplyr)
 library(ggplot2)
-#library(caret)
+library(caret)
 ```
 
 ```{r}
 #http://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/prostate.data
-prostate.data <- read.delim("~/Workspace/AD2/problema3/data/prostate.data.txt")
+prostate.data <- read.delim("./data/prostate.data.txt")
 ```
 
 ```{r}
@@ -35,7 +35,7 @@ dados_treino <- prostate.data[prostate.data$train==TRUE,]
 dados_treino$train <- NULL
 
 dados_teste <- prostate.data[prostate.data$train==FALSE,] 
-dados_teste<- NULL
+dados_teste$train<- NULL
 ```
 
 ```{r}
@@ -57,6 +57,28 @@ reg_multipla = lm(dados_treino$lpsa ~ dados_treino$lcavol +
 
 
 summary(reg_multipla)
+```
+
+
+```{r}
+predicoes = predict.lm(reg_multipla, dados_treino)
+residuos = dados_treino$lpsa - predicoes
+axisRange = extendrange(c(dados_treino$lpsa,predicoes)) 
+plot(dados_treino$lpsa,predicoes)
+abline(0,1,col="blue",lty=2,lwd=2)
+```
+
+```{r}
+plot(predicoes,residuos)
+abline(h=0,col="blue",lty=2,lwd=2)
+```
+
+```{r}
+qqnorm(residuos)
+qqline(residuos, col = 2,lwd=2,lty=2)
+```
+```{r}
+RMSE(predicoes,dados_treino$lpsa)
 ```
 
 
