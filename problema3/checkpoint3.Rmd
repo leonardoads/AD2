@@ -1,0 +1,58 @@
+---
+title: "checkpoint3"
+author: "Leonardo Alves dos Santos"
+date: "04-04-2016"
+output: html_document
+---
+
+```{r, message=FALSE, warning=FALSE}
+#Libraries
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(caret)
+```
+
+Introdução
+------
+```{r}
+#http://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/prostate.data
+prostate.data <- read.delim("./data/prostate.data.txt")
+```
+
+Os dados utilizados representam resultados de exames realizados em pacientes do sexo Masculino, com o
+objetivo de diagnosticar pacientes com Câncer de Prostata. O dataset possui os seguintes dados.
+
+* vol: volume do câncer
+* weight: peso do paciente
+* age: idade do paciente
+* bph: hiperplasia prostática benigna
+* svi: invasão das vesículas seminais
+* cp: penetração capsular
+* gleason: escore Gleason
+* pgg45: percentagem escore Gleason 4 ou 5
+* psa: antígeno específico da próstata.
+
+O objetivo é criar um modelo melhorado do encontrado no Checkpoint 2.
+
+O Modelo Inicial
+------
+
+```{r , message=FALSE, warning=FALSE, results = "hide"}
+prostate.data <- select(prostate.data, -X)
+dados_treino <- prostate.data[prostate.data$train==TRUE,]
+dados_treino$train <- NULL
+dados_teste <- prostate.data[prostate.data$train==FALSE,]
+dados_teste$train<- NULL
+reg_multipla = lm(lpsa ~ ., dados_treino)
+```
+
+```{r}
+summary(reg_multipla)
+```
+
+Modelo Usando LASSO
+------
+
+Comparando Resultados
+------
