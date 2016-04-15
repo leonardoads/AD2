@@ -1,8 +1,8 @@
 ---
 title: "Checkpoint 2 - Nível do PSA"
 author: "Leonardo Alves dos Santos"
-date: "March 30, 2016"
-output: html_document
+date: "April 1, 2016"
+output: pdf_document
 ---
 
 ```{r, message=FALSE, warning=FALSE}
@@ -17,20 +17,46 @@ library(caret)
 #http://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/prostate.data
 prostate.data <- read.delim("./data/prostate.data.txt")
 ```
+Introdução
+------
+Os dados utilizados representam resultados de exames realizados em pacientes do sexo Masculino, com o objetivo de diagnosticar pacientes com Câncer de Prostata. O dataset possui os seguintes dados.
+
+* vol: volume do câncer
+* weight:  peso do paciente
+* age: idade do paciente
+* bph: hiperplasia prostática benigna
+* svi: invasão das vesículas seminais
+* cp: penetração capsular
+* gleason: escore Gleason
+* pgg45: percentagem escore Gleason 4 ou 5
+* psa: antígeno específico da próstata.
+
+A ideia é, através de Regreção linear, criar um modelor apra prever os niveis de PSA no sangue do paciente.
+
+Conhecendo Melhor os Dados
+------
+
+A idade dos pacientes avaliados é entre `r min(prostate.data$age)` e `r max(prostate.data$age)`. A idade média é de `r mean(prostate.data$age)`. Como se pode observar no box plot abaixo, a maior parte deles tem idade entre 60 e 70 anos.
 
 ```{r}
 boxplot_age <- ggplot(prostate.data, aes(y=age, x = ""))
-boxplot_age +geom_point()
 boxplot_age+geom_boxplot(outlier.colour = 'green')
 ```
 
+Criando um primeiro Modelo
+------
+Muito se fala que homens a partir de uma certa idade devem começar a procurar um médico para prevenir o cancer de prostata. Um modelo inicial que pode ser feito é olhar a relação entre a idade e o nivel do PSA.
+
 ```{r}
 plt_agexlpsa <- ggplot(prostate.data, aes(lpsa, age))
-plt_agexlpsa+geom_boxplot()
 plt_agexlpsa+geom_point(colour = "red", size = 2)
 ```
 
+Antes de criar o modelo, vamos separar os dados em treino e teste. Será removido a variável X pois ela indica somente o número da linha da entrada. Após a separação será removido a variável train pois ela só serve para separar os dados.
+
 ```{r}
+prostate.data <- select(prostate.data, -X)
+
 dados_treino <- prostate.data[prostate.data$train==TRUE,]
 dados_treino$train <- NULL
 
@@ -38,47 +64,57 @@ dados_teste <- prostate.data[prostate.data$train==FALSE,]
 dados_teste$train<- NULL
 ```
 
+Vamos construir um modelo utilizando apenas a idade e lpsa (log do PSA).
+
 ```{r}
-reg_multipla = lm(dados_treino$lpsa ~ dados_treino$lcavol + 
-                    dados_treino$lweight + dados_treino$age + dados_treino$lbph + 
-                    dados_treino$svi + dados_treino$lcp + dados_treino$gleason + 
-                    dados_treino$pgg45)
+reg_linear = lm(lpsa ~ ., select(dados_treino, age,lpsa))
+summary(reg_linear)
+```
+O resultado desse modelo mostra que a variavel idade não ajuda a mensurar o PSA. Além de possuir um p-valor muito alto, o q significa que para aceitar a hipotese desse ser um bom modelo, é necessário um nivel de confiança muito baixo (nivel de confiança tem q ser menor que `r 100 - 0.06393`%), isto indica que nosso modelo gera muitos erros.
+
+Melhorando o Modelo
+------
+Vimos que a idade por si só não é capaz de prever o nível de PSA. Vamos agorar verificar como fica um modelo usando todas as `r length(dados_treino)-1` variáveis dos dados de treino
+
+```{r}
+reg_multipla = lm(lpsa ~ ., dados_treino)
 summary(reg_multipla)
 ```
 
+Ao contrário do modelo anterior esse modelo possui um p-valor pequeno. O que não nós permite rejeita-lo, com um bom nivel de significância, comoo um modelo para prever o PSA. O que iremos testar daqui para a frente é se ele é realmente um bom modelo, isto é, se os resultados das predições feitas por ele são bons, tem um erro baixo. 
+
+Começaremos inicialmente calculando as predições. Isto será feito usando os dados de teste. Também iremos calcular os residuos. Estes representam quanto o modelo errou, é a diferença entre o valor real e o valor predito pelo modelo.
+
 ```{r}
-reg_multipla = lm(dados_treino$lpsa ~ dados_treino$lcavol + 
-                                      dados_treino$lweight +
-                                      dados_treino$age +
-                                      dados_treino$lbph + 
-                                      dados_treino$svi + 
-                                      dados_treino$lcp +  
-                                      dados_treino$pgg45)
-
-
-summary(reg_multipla)
+predicoes = predict.lm(reg_multipla, dados_teste)
+residuos = dados_teste$lpsa - predicoes
 ```
 
-
+Abaixo podemos ver os dados reais versos os preditos
 ```{r}
-predicoes = predict.lm(reg_multipla, dados_treino)
-residuos = dados_treino$lpsa - predicoes
-axisRange = extendrange(c(dados_treino$lpsa,predicoes)) 
-plot(dados_treino$lpsa,predicoes)
+axisRange = extendrange(c(dados_teste$lpsa,predicoes)) 
+plot(dados_teste$lpsa,predicoes)
 abline(0,1,col="blue",lty=2,lwd=2)
 ```
+
+Com excessão de alguns outliers, os valores preditos, se aproximam dos valores reais.
+Outra forma de ver a relação acertos x erros é olhando o valor predito versus os residuos.
 
 ```{r}
 plot(predicoes,residuos)
 abline(h=0,col="blue",lty=2,lwd=2)
 ```
 
+Um forma de testar se temos um bom modelo, é olhando se os residuos seguem um distribuição normal com média 0. Uma forma, visual, de verificar isso é usando o gráfico do qq-plot. quanto mais próximos da linha da normal estiverem os dados, mais eles se apróximam de uma distribuição normal. Isso é o que acontece com a distribuição dos residuos, pode ser visto a baixo. Sendo assim temos um forte indicio de que temos um bom modelo.
+
 ```{r}
 qqnorm(residuos)
 qqline(residuos, col = 2,lwd=2,lty=2)
 ```
-```{r}
-RMSE(predicoes,dados_treino$lpsa)
-```
 
+Uma outra forma de vermos se temos um bom modelo é olhar o RMSE, quanto mais próximos de zero, melhor é o modelo analisado. Nosso modelo possui um RMSE de `r RMSE(predicoes,dados_teste$lpsa)`, o que é relativamente baixo, sendo assim podemos dizer que sim temos um modelo para prever o PSA.
 
+Conclusão
+------
+
+Podemos dizer que encontramos um modelo que é capaz de prever o PSA apresentando um baixo nivel de erros. Não podemos dizer que este é o modelo perfeito para predizer, mas temos um modelo que causa baixos residuos. 

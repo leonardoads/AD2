@@ -38,14 +38,22 @@ O objetivo é criar um modelo melhorado do encontrado no Checkpoint 2.
 O Modelo Inicial
 ------
 
-```{r , message=FALSE, warning=FALSE, results = "hide"}
+```{r, message=FALSE, warning=FALSE, include=FALSE}
 prostate.data <- select(prostate.data, -X)
 dados_treino <- prostate.data[prostate.data$train==TRUE,]
 dados_treino$train <- NULL
+
 dados_teste <- prostate.data[prostate.data$train==FALSE,]
 dados_teste$train<- NULL
+
 reg_multipla = lm(lpsa ~ ., dados_treino)
+
+predicoes = predict.lm(reg_multipla, dados_teste)
+residuos = dados_teste$lpsa - predicoes
+
+
 ```
+O modelo utilizado era composto por: lcavol, lweight, age, lbph, svi, lcp, gleason, pgg45. Este modelo possuia um RMSE de `r RMSE(predicoes,dados_teste$lpsa)`. A baixo está o detalhamento do modelo que encontramos.
 
 ```{r}
 summary(reg_multipla)
@@ -53,6 +61,96 @@ summary(reg_multipla)
 
 Modelo Usando LASSO
 ------
+O LASSO é um método de Encolhimento, ou de Shrinkage, utilizado para reduzir o erro do modelo e evitar o overfitting dos dados.Segundo o blog [Mineração de Dados](https://mineracaodedados.wordpress.com/2015/06/20/qual-a-diferenca-entre-lasso-e-ridge-regression/) para fazer isto, ele utiliza de "mecanismo de penalização dos coeficientes com um alto grau de correlação entre si, mas que usa o mecanismo de penalizar os coeficientes de acordo com o seu valor absoluto (soma dos valores dos estimadores) usando o mecanismo de minimizar o erro quadrático."
 
+Para calcular o LASSO, iremos utilizar funções do pacote Caret. Primeiro iremos criar o nosso modelo usando a função train.
+
+```{r, message=FALSE, warning=FALSE}
+fitControl <- trainControl(method='cv', number = 30)
+
+lasso.fit <- train(lpsa ~ ., dados_treino , 
+                  method='lasso', 
+                  metric="RMSE",
+                  tuneLength = 30,
+                  trControl=fitControl)
+```
+
+A baixo é possivel observar os valores encontrados do RMSE, durante a criação do modelo. O modelo gerado é aquele que possuir o menor RMSE.
+```{r}
+plot(lasso.fit)
+```
+
+Abaixo podemos ver o detalhamento do LASSO.
+```{r}
+lasso.fit
+```
+
+É possivel ver também o nivel de importância de cada uma das variaveis utilizadas.
+```{r}
+plot(varImp(lasso.fit))
+```
+
+Após calcular o modelo, iremos fazer a predição dos dados
+```{r}
+lasso_prediction <- predict(lasso.fit, dados_teste)
+lasso_residuos = dados_teste$lpsa - predicoes
+
+```
+
+Abaixo podemos ver os dados reais versos os preditos
+```{r}
+axisRange = extendrange(c(dados_teste$lpsa,lasso_prediction)) 
+plot(dados_teste$lpsa,lasso_prediction)
+abline(0,1,col="blue",lty=2,lwd=2)
+```
+
+Com excessão de alguns outliers, os valores preditos, se aproximam dos valores reais, e são aparentemente próximos dos encontrados no modelo do Checkpoint 2.
+
+Outra forma de ver a relação acertos x erros é olhando o valor predito versus os residuos.
+
+```{r}
+plot(lasso_prediction,lasso_residuos)
+abline(h=0,col="blue",lty=2,lwd=2)
+```
+
+Um forma de testar se temos um bom modelo, é olhando se os residuos seguem um distribuição normal com média 0. Uma forma, visual, de verificar isso é usando o gráfico do qq-plot. quanto mais próximos da linha da normal estiverem os dados, mais eles se apróximam de uma distribuição normal. Isso é o que acontece com a distribuição dos residuos, pode ser visto a baixo. Sendo assim temos um forte indicio de que temos um bom modelo.
+
+```{r}
+qqnorm(lasso_residuos)
+qqline(lasso_residuos, col = 2,lwd=2,lty=2)
+```
+
+
+```{r, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+round(defaultSummary(lasso_prediction), digits = 3)
+```
+                  
 Comparando Resultados
 ------
+Depois de ter os dois modelos calculados podemos observar qual dos dois tem o melhor resultado. Uma forma inicial de fazer isso é olharmos a comparação dos valores preditos com os reais de forma gráfica.
+
+```{r}
+lm_prediction <- data.frame(pred = predicoes, obs = dados_teste$lpsa)
+compare <- data.frame(pred = predicoes, obs = dados_teste$lpsa)
+compare$model <- "RL"
+
+lasso_prediction <- data.frame(pred = lasso_prediction, obs = dados_teste$lpsa)
+lasso_prediction$model <- "LASSO"
+
+compare <- rbind(compare, lasso_prediction)
+
+ggplot(compare, aes(x = pred, y = obs)) + 
+  geom_point(alpha = 0.5, position = position_jitter(width=0.2)) + 
+  facet_grid(. ~ model) + 
+  geom_abline() +
+  ggtitle("Observado x Previsão (validação)")
+
+```
+
+Observamos pouca variação entre os resultados. Porém o resultado do LASSO se mostra minimamente mais próximos do real. Comparando os RMSE temos: 
+
+RMSELM = `r RMSE(predicoes,dados_teste$lpsa)`,
+
+RMSELASSO = `r RMSE(lasso_prediction$pred ,dados_teste$lpsa)`
+
+Como estamos atrás do menor valor do RMSE, podemos dizer que o modelo do laço encontrou sim o melhor modelo. Porém com valores muito próximos dos encontrados com regressão linear multipla, utilizando todas as variáveis.
